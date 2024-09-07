@@ -2,17 +2,17 @@ package main
 
 import (
 	"fmt"
+
+	"github.com/krazybean/HailTraceTest/utils"
 )
 
 func main() {
 	bootstrapServers := "localhost:9092"
 	topic := "raw-weather-reports"
 
-	err := CreateTopicIfNotExists(bootstrapServers, topic)
+	err := utils.CreateTopicIfNotExists(bootstrapServers, topic)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-
-	fmt.Println("Topic created successfully.")
 }
