@@ -1,0 +1,7 @@
+{
+    "noaa_urls": [
+      "https://www.spc.noaa.gov/climo/reports/today_raw_torn.csv",
+      "https://www.spc.noaa.gov/climo/reports/today_raw_hail.csv",
+      "https://www.spc.noaa.gov/climo/reports/today_raw_wind.csv"
+    ]
+  }

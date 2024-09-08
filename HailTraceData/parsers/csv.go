@@ -7,9 +7,10 @@ import (
 
 	"github.com/araddon/dateparse"
 	"github.com/krazybean/HailTraceTest/utils"
+	"github.com/sirupsen/logrus"
 )
 
-func parseStormCSV(storm_csv string) {
+func parseStormCSV(storm_csv string, Logger *logrus.Logger) {
 	file, err := os.Open(storm_csv)
 	if err != nil {
 		utils.Logger.Error(err)
@@ -23,12 +24,12 @@ func parseStormCSV(storm_csv string) {
 	// Read the header row
 	header, err := reader.Read()
 	if err != nil {
-		utils.Logger.Error(err)
+		Logger.Error(err)
 		return
 	}
 
 	// Print the header
-	utils.Logger.Info(header)
+	Logger.Info(header)
 
 	// Read each row of the CSV file
 	for {
@@ -70,20 +71,20 @@ func parseStormCSV(storm_csv string) {
 
 		jsonBody, err := json.Marshal(body)
 		if err != nil {
-			utils.Logger.Error(err)
+			Logger.Error(err)
 		}
 
 		// Parse the time field into a Go time.Time object
 		parsedTime, err := dateparse.ParseAny(time)
 
 		if err != nil {
-			utils.Logger.Error(err)
+			Logger.Error(err)
 			continue
 		}
 
 		// Log the extracted data
-		utils.Logger.Infof("Time: %v, Location: %v, Remarks: %v", parsedTime, location, remarks)
-		utils.Logger.Infof("JSON Body: %s", jsonBody)
+		Logger.Infof("Time: %v, Location: %v, Remarks: %v", parsedTime, location, remarks)
+		Logger.Infof("JSON Body: %s", jsonBody)
 
 		// Send the JSON message to the Kafka topic
 		utils.SendStormToTopic(jsonBody)
