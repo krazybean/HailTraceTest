@@ -30,7 +30,12 @@ func runTask() {
 		return
 	}
 
-	config := utils.ReadConfig("config.json")
+	config, err := utils.ReadConfig("config.json")
+	// Handle error reading configuration
+	if err != nil {
+		utils.Logger.Errorf("Error reading configuration: %v", err)
+		return
+	}
 	utils.Logger.Debugf("Configuration: %+v", config)
 
 	// Process each URL in the configuration

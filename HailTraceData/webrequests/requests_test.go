@@ -1,69 +1,89 @@
-package webrequests_te
+package webrequests
 
 import (
-        "net/http"
-        "net/http/httptest"
-        "os"
-        "testing"
-        "path/filepath"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"testing"
+	"strings"
 
-	"requests"
-        "github.com/sirupsen/logrus"
-        "github.com/stretchr/testify/assert"
-        "github.com/stretchr/testify/mock"
+	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
 )
 
-// MockLogger defines a mock for the Logger interface
-type MockLogger struct {
-        mock.Mock
+// Mock Logger
+type MockLoggerHook struct {
+	logs []string
 }
 
-func (m *MockLogger) Fire(entry *logrus.Entry) error {
-        args := m.Called(entry)
-        return args.Error(0)
+func (hook *MockLoggerHook) Fire(entry *logrus.Entry) error {
+	hook.logs = append(hook.logs, entry.Message)
+	return nil
 }
 
-func (m *MockLogger) Levels() []logrus.Level {
-        args := m.Called()
-        return args.Get(0).([]logrus.Level)
+func (hook *MockLoggerHook) Levels() []logrus.Level {
+	return logrus.AllLevels
 }
 
-func (m *MockLogger) ContainsLog(log string) bool {
-        args := m.Called(log)
-        return args.Bool(0)
+func NewMockLogger() (*logrus.Logger, *MockLoggerHook) {
+	logger := logrus.New()
+	hook := &MockLoggerHook{}
+	logger.AddHook(hook)
+	logger.SetOutput(io.Discard)
+	return logger, hook
 }
 
 func TestDownloadStormCSV(t *testing.T) {
-        // Create a mock logger
-        mockLogger := &MockLogger{}
+	// Mock Logger setup
+	logger, hook := NewMockLogger()
 
-        // Create a mock HTTP server
-        mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-                w.WriteHeader(http.StatusOK)
-                _, _ = w.Write([]byte("test,csv,content\nrow1,data1,data2\n"))
-        }))
-        defer mockServer.Close()
+	// Mock HTTP server
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("test,csv,content\nrow1,data1,data2\n"))
+	}))
+	defer mockServer.Close()
 
-        // Set expectations on the mock logger
-        mock.On(mockLogger, "ContainsLog", "Get \"http://invalid-url\":").Return(false) // No log for valid URL
+	// Test downloading the CSV file from the mock server
+	filePath, err := DownloadStormCSV(mockServer.URL+"/testfile.csv", logger)
+	assert.NoError(t, err, "Expected no error when downloading CSV")
 
-        // Test downloading the CSV file from the mock server
-        filePath, err := DownloadStormCSV(mockServer.URL+"/testfile.csv", mockLogger)
-        assert.NoError(t, err, "Expected no error when downloading CSV")
+	// Verify file exists
+	_, err = os.Stat(filePath)
+	assert.NoError(t, err, "Expected file to exist after download")
 
-        // Check that the file is created
-        _, err = os.Stat(filePath)
-        assert.NoError(t, err, "Expected file to exist after download")
+	// Verify Contents
+	fileContent, err := os.ReadFile(filePath)
+	assert.NoError(t, err, "Expected no error reading the downloaded file")
+	assert.Equal(t, "test,csv,content\nrow1,data1,data2\n", string(fileContent))
 
-        // Check the file content
-        fileContent, err := os.ReadFile(filePath)
-        assert.NoError(t, err, "Expected no error reading the downloaded file")
-        assert.Equal(t, "test,csv,content\nrow1,data1,data2\n", string(fileContent))
+	// File Cleanup
+	err = os.RemoveAll(filepath.Dir(filePath))
+	assert.NoError(t, err, "Expected no error when deleting the temporary directory")
 
-        // Cleanup the downloaded file
-        err = os.RemoveAll(filepath.Dir(filePath))
-        assert.NoError(t, err, "Expected no error when deleting the temporary directory")
+	// Ensure no errors in output
+	for _, log := range hook.logs {
+		assert.NotContains(t, log, "Get \"http://invalid-url\":", "Unexpected log entry found")
+	}
+}
 
-        // Verify the mock's expectations
-        mock.VerifyAll(mockLogger)
+func TestDownloadStormCSVInvalidURL(t *testing.T) {
+    // Mock the logger
+    logger, hook := NewMockLogger()
+
+    // Test downloading from an invalid URL
+    _, err := DownloadStormCSV("http://invalid-url", logger)
+    assert.Error(t, err, "Expected an error when downloading from an invalid URL")
+
+    // Check and match error response
+    found := false
+    for _, log := range hook.logs {
+        if strings.Contains(log, "Error: Get \"http://invalid-url\"") {
+            found = true
+            break
+        }
+    }
+    assert.True(t, found, "Expected log for invalid URL not found")
 }
