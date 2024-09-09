@@ -7,7 +7,7 @@ import (
 )
 
 type Config struct {
-	Urls []string `json:"urls"`
+	Urls []string `json:"noaa_urls"`
 }
 
 func ReadConfig(configFile string) Config {

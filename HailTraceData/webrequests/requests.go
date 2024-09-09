@@ -1,25 +1,27 @@
-package requests
+package webrequests
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"utils"
 	"github.com/sirupsen/logrus"
+
 )
 
 func init() {
-	fmt.Println("Simple interest package initialized")
 }
 
-func downloadStormCSV(url string, Logger *logrus.Logger) {
+func DownloadStormCSV(url string, Logger *logrus.Logger) (string, error) {
+	utils.Logger.Infof("Inside DownloadStormCSV")
 	// Download the file
 	resp, err := http.Get(url)
 	if err != nil {
 		Logger.Fatal(err)
+		return "", err // Return an empty string and the error
 	}
 	defer resp.Body.Close()
 
@@ -27,22 +29,26 @@ func downloadStormCSV(url string, Logger *logrus.Logger) {
 	tempDir, err := os.MkdirTemp("", "reports")
 	if err != nil {
 		Logger.Fatal(err)
+		return "", err // Return an empty string and the error
 	}
 	// defer os.RemoveAll(tempDir)
 
 	// Save the file to the temp directory
 	filePath := filepath.Join(tempDir, getFileNameFromURL(url))
+	Logger.Infof("Temp file saved to {%v}", filePath)
 	file, err := os.Create(filePath)
 	if err != nil {
 		Logger.Fatal(err)
+		return "", err // Return an empty string and the error
 	}
 	defer file.Close()
 
 	_, err = io.Copy(file, resp.Body)
 	if err != nil {
 		Logger.Fatal(err)
+		return "", err // Return an empty string and the error
 	}
-
+	return filePath, nil // Return the file path and no error
 }
 
 func getFileNameFromURL(url string) string {

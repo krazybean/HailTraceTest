@@ -3,7 +3,7 @@ package schedules
 import (
 	"time"
 
-	"github.com/krazybean/HailTraceTest/utils"
+	"utils"
 )
 
 func RunMidnightTask(task func()) {
