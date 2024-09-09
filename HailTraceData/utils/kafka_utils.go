@@ -36,7 +36,36 @@ type AdminClientInterface interface {
 	Close()
 }
 
+func NewKafkaAdminClient(bootstrapServers string) (AdminClientInterface, error) {
+	adminClient, err := kafka.NewAdminClient(&kafka.ConfigMap{
+		"bootstrap.servers": bootstrapServers,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Kafka admin client: %w", err)
+	}
+	return adminClientWrapper{adminClient}, nil
+}
+
+type adminClientWrapper struct {
+	*kafka.AdminClient
+}
+
+func (w adminClientWrapper) GetMetadata(topic *string, allTopics bool, timeoutMs int) (*kafka.Metadata, error) {
+	return w.AdminClient.GetMetadata(topic, allTopics, timeoutMs)
+}
+
+func (w adminClientWrapper) CreateTopics(ctx context.Context, specs []kafka.TopicSpecification) ([]kafka.TopicResult, error) {
+	return w.AdminClient.CreateTopics(ctx, specs)
+}
+
+func (w adminClientWrapper) Close() {
+	w.AdminClient.Close()
+}
+
+
 func InitKafkaProducer(bootstrapServers string, adminClient AdminClientInterface) error {
+
+	
 	// Stayed with Confluent Kafka although the setup seems to be overkill
 	var err error
 	producer, err = kafka.NewProducer(&kafka.ConfigMap{
@@ -110,4 +139,49 @@ func SendStormToTopic(jsonBody []byte) error {
 	}
 
 	return nil
+}
+
+func CreateTopicIfNotExists(bootstrapServers, topic string) error {
+	client, err := kafka.NewAdminClient(&kafka.ConfigMap{
+		"bootstrap.servers": bootstrapServers,
+	})
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+	defer client.Close()
+	topics, err := client.GetMetadata(nil, true, 10000)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+	Logger.Info("Topics:")
+	for _, topic := range topics.Topics {
+		Logger.Info(topic.Topic)
+	}
+	var topicExists bool
+	for _, topic := range topics.Topics {
+		if topic.Topic == "raw-weather-reports" {
+			topicExists = true
+			break
+		}
+	}
+	if !topicExists {
+		Logger.Info("Topic 'raw-weather-reports' doesn't exist, creating...")
+		_, err = client.CreateTopics(context.Background(), []kafka.TopicSpecification{
+			{
+				Topic:             "raw-weather-reports",
+				NumPartitions:     1,
+				ReplicationFactor: 1,
+			},
+		})
+		if err != nil {
+			fmt.Println(err)
+			return err
+		}
+		Logger.Info("Topic 'raw-weather-reports' created successfully.")
+	} else {
+		Logger.Info("Topic 'raw-weather-reports' already exists.")
+	}
+	return err
 }

@@ -16,8 +16,15 @@ func runTask() {
 	bootstrapServers := "localhost:9092"
 	topic := "raw-weather-reports"
 
+	// Create Kafka AdminClient
+	adminClient, err := utils.NewKafkaAdminClient(bootstrapServers)
+	if err != nil {
+		fmt.Println("Failed to create Kafka admin client:", err)
+		return
+	}
+
 	// Ensure Kafka producer is initialized
-	err := utils.InitKafkaProducer(bootstrapServers)
+	err = utils.InitKafkaProducer(bootstrapServers, adminClient)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -50,23 +57,20 @@ func runTask() {
 			parsers.ParseStormCSV(filePath, utils.Logger)
 		}
 	}
-
-	// Close the Kafka producer if needed (depending on your implementation)
-	// utils.CloseKafkaProducer()
 }
 
 func main() {
-	// Schedule the task to run at midnight
-	go schedules.RunMidnightTask(runTask)
+	// Schedule task
+	go schedules.RunMidnightTask(runTask, utils.Logger)
 
-	// Allow on-demand execution by reading user input
+	// User Input
 	reader := bufio.NewReader(os.Stdin)
 
 	for {
 		fmt.Println("Enter 'run' to execute the task immediately or 'exit' to quit:")
 		input, _ := reader.ReadString('\n')
 
-		switch input = input[:len(input)-1]; input { // Trim the newline character
+		switch input = input[:len(input)-1]; input {
 		case "run":
 			utils.Logger.Info("Running task on demand...")
 			runTask()
