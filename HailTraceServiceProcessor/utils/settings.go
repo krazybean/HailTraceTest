@@ -8,7 +8,8 @@ import (
 )
 
 type Config struct {
-	Urls []string `json:"noaa_urls"`
+	// Here add other static definitions we dont want statically defined.
+	// Urls []string `json:"noaa_urls"`
 }
 
 func ReadConfig(configFile string) (Config, error) {
