@@ -109,7 +109,7 @@ func processCSVRecord(record []string, Logger *logrus.Logger) {
 	time := record[0]
 	measurement := record[1]
 	location := record[2]
-	country := record[3]
+	county := record[3]
 	state := record[4]
 	lat := record[5]
 	lon := record[6]
@@ -120,7 +120,7 @@ func processCSVRecord(record []string, Logger *logrus.Logger) {
 		Time        string `json:"time"`
 		Measurement string `json:"measurement"`
 		Location    string `json:"location"`
-		Country     string `json:"country"`
+		County     	string `json:"county"`
 		State       string `json:"state"`
 		LAT         string `json:"lat"`
 		LON         string `json:"lon"`
@@ -129,7 +129,7 @@ func processCSVRecord(record []string, Logger *logrus.Logger) {
 		Time:        time,
 		Measurement: measurement,
 		Location:    location,
-		Country:     country,
+		County:      county,
 		State:       state,
 		LAT:         lat,
 		LON:         lon,
