@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "app-module-path": "^2.2.0",
+    "sqlite3": "^5.1.7"
+  }
+}

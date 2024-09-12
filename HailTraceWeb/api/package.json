@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.20.0",
+    "install": "^0.13.0",
+    "kafkajs": "^2.2.4",
+    "npm": "^10.8.3"
+  }
+}

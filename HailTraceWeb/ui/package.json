@@ -1,0 +1,28 @@
+{
+  "name": "ui",
+  "version": "1.0.0",
+  "description": "ui for HailTraceWeb",
+  "main": "index.js",
+  "scripts": {
+    "start": "PORT=3002 NODE_ENV=development NODE_OPTIONS=--no-deprecation react-scripts start"
+
+  },
+  "author": "Juan Castro <juan.castro.dev@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "react-dom": "^18.3.1",
+    "react-scripts": "^5.0.1"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}

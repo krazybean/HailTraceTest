@@ -23,6 +23,13 @@ go.work.sum
 
 # env file
 .env
+
+# python virtual environment
 .venv
+
+# vscode giving me problems
 .vscode-upload.json
 .vscode
+
+# node
+node_modules
