@@ -6,7 +6,8 @@ const path = require('path');
 const { Worker } = require('worker_threads');
 
 const userRoutes = require('./routes/userRoutes');
-const kafkaRoute = require('./routes/kafkaRoute'); 
+const kafkaRoute = require('./routes/kafkaRoute');
+const { startConsumer } = require('./services/consumer');
 
 const app = express();
 
@@ -37,6 +38,8 @@ worker.on('message', (message) => {
     kafkaStats = message.data; // Update stats from the worker thread
   }
 });
+
+startConsumer();
 
 // Expose Kafka stats via API endpoint
 app.get('/kafka/stats', (req, res) => {

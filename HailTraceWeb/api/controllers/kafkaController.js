@@ -29,6 +29,7 @@ const consumeMessages = async () => {
   KafkaConsumer.consumeMessages((message) => {
     const parsedMessage = parseMessage(message);
     if (parsedMessage) {
+      console.debug('Storing message')
       KafkaModel.storeMessage(parsedMessage);
     }
   });
