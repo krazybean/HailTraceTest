@@ -13,10 +13,11 @@ func main() {
 	groupID := "weather-data-consumer-group" // TODO: Move to config
 
 	// Initialize Kafka Producer
-	err := utils.InitProducer(bootstrapServers)
+	producer, err := utils.InitProducer(bootstrapServers)
 	if err != nil {
 		utils.Logger.Fatalf("Failed to initialize Kafka producer: %v", err)
 	}
+	utils.Producer = producer
 	defer utils.CloseProducer()
 
 	// Initialize Kafka Admin Client

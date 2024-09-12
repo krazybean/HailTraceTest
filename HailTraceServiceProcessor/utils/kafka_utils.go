@@ -9,7 +9,7 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
-var producer ProducerInterface
+var Producer ProducerInterface
 
 const (
 	RAW_WEATHER_REPORTS_TOPIC string = "raw-weather-reports"
@@ -30,22 +30,26 @@ type AdminClientInterface interface {
 	Close()
 }
 
-func InitProducer(bootstrapServers string) error {
-    producer, err := kafka.NewProducer(&kafka.ConfigMap{
+// func InitProducer(bootstrapServers string) error {
+// 	var err error
+//     producer, err := kafka.NewProducer(&kafka.ConfigMap{
+//         "bootstrap.servers": bootstrapServers,
+//     })
+//     if err != nil {
+//         return err
+//     }
+//     return nil
+// }
+
+func InitProducer(bootstrapServers string) (*kafka.Producer, error) {
+    return kafka.NewProducer(&kafka.ConfigMap{
         "bootstrap.servers": bootstrapServers,
     })
-    if err != nil {
-        return err
-    }
-    producer.ProduceChannel()
-    producer.Events()
-    producer.Close()
-    return nil
 }
 
 func CloseProducer() {
-	if producer != nil {
-		producer.Close()
+	if Producer != nil {
+		Producer.Close()
 	}
 }
 
@@ -148,6 +152,7 @@ func (kc *KafkaConsumer) ConsumeFromRawWeatherReports(transformFunc func([]byte)
                 }
 
                 // Here is were we hand off data to the new transformed-weather-data topic.
+				Logger.Infof("Sending transformed message to topic %s", transformedTopicName)
                 err = SendTransformedDataToTopic(transformedData)
                 if err != nil {
                     Logger.Errorf("Error sending transformed message: %v", err)
@@ -194,16 +199,16 @@ func SendTransformedDataToTopic(jsonBody []byte) error {
 		Value: jsonBody,
 	}
 
-	if producer == nil {
+	if Producer == nil {
 		return fmt.Errorf("Kafka producer is not initialized")
 	}
 
-	producer.ProduceChannel() <- msg
+	Producer.ProduceChannel() <- msg
 
 	select {
 	case <-ctx.Done():
 		return fmt.Errorf("message delivery timed out")
-	case delivery := <-producer.Events():
+	case delivery := <-Producer.Events():
 		switch ev := delivery.(type) {
 		case *kafka.Message:
 			if ev.TopicPartition.Error != nil {
