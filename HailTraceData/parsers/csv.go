@@ -105,6 +105,7 @@ func processCSVRecord(record []string, Logger *logrus.Logger) {
 		return
 	}
 
+	
 	// Extract the desired fields
 	time := record[0]
 	measurement := record[1]

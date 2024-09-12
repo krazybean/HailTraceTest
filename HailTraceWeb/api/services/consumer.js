@@ -1,3 +1,5 @@
+// consumer.js
+
 const { Kafka } = require('kafkajs');
 const kafkaConfig = require('../kafkaConfig');
 const kafkaController = require('../controllers/kafkaController');
@@ -14,20 +16,14 @@ async function startConsumer() {
     await consumer.subscribe({ topic: kafkaConfig.kafka.topic, fromBeginning: true });
     console.log('Subscribed to topic!');
 
-    const interval = 30 * 1000; // 30 seconds
-  
-    setInterval(async () => {
-      await consumer.run({
-        eachMessage: {
-          topic: kafkaConfig.kafka.topic,
-          partition: 0,
-          callback: async ({ topic, partition, message }) => {
-            console.log('Received message: ', message.value);
-            kafkaController.consumeMessages(message.value)
-          },
+    await consumer.run({
+        eachBatch: async ({ batch }) => {
+            for (const message of batch.messages) {
+                console.log('Received message: ', message.value.toString('utf8'));
+                kafkaController.consumeMessages(message.value.toString('utf8')); 
+            }
         },
-      });
-    }, interval);
-  }
+    });
+}
 
 module.exports = { startConsumer };
